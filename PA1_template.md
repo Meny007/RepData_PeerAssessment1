@@ -29,7 +29,8 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 
 Loading and preprocessing the data
 -----------------------------------
-```{r}
+
+```r
 temp <- tempfile()
 download.file("http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip",temp)
 con <- unz(temp, "activity.csv")
@@ -41,12 +42,14 @@ Calculating the mean total number of steps taken per day
 --------------------------------------------------------
 
 1.Calculating the total number of steps taken per day
-```{r}
+
+```r
 library(ggplot2)
 tpd <- tapply(dat$steps, dat$date,sum)
 ```
 2.Genrating a histogram of the total number of steps taken each day
-```{r}
+
+```r
 qplot(tpd 
       ,geom="histogram"
       ,binwidth = 5000
@@ -58,14 +61,29 @@ qplot(tpd
       ,xlimit = c(0,23000)
       )
 ```
+
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png) 
 3.Calculating and reporting the mean and median of the total number of steps taken per day
-```{r}
+
+```r
 mean(tpd, na.rm=TRUE)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(tpd, na.rm=TRUE)
 ```
 
+```
+## [1] 10765
+```
+
 Calculating and plotting the average daily activity pattern
-```{r}
+
+```r
 aps <- tapply(dat$steps, dat$interval, mean, na.rm=TRUE)
 aps <- as.data.frame(as.table(aps))
 names(aps) <- c("interval", "aps")
@@ -75,19 +93,32 @@ ggplot(data=aps, aes(x=interval, y=aps)) +
         xlab("5-minute interval") +
         ylab("aps - Average Number of Steps per Interval")
 ```
+
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) 
 Finding the 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps
-```{r}
+
+```r
 aps[which.max(aps$aps),1]
+```
+
+```
+## [1] 835
 ```
 
 Imputing missing values
 =======================
 Total Number of Missing Values in the Dataset
-```{r}
+
+```r
 sum(is.na(dat))
 ```
+
+```
+## [1] 2304
+```
 Creating a new Dataset with imputation based on the mean steps per interval and generating a histogram of the total number of steps taken each day. Eventually recoputing the mean and media
-```{r}
+
+```r
 byinterval <- aggregate(steps ~ interval,dat, mean)
 imputation <- transform(dat, steps = ifelse(is.na(dat$steps), byinterval$steps[match(dat$interval, byinterval$interval)], dat$steps))
 tpdimput <- tapply(imputation$steps, imputation$date,sum)
@@ -100,20 +131,49 @@ qplot(tpdimput
       ,col = I("red")
       ,alpha = I(.2)
       ,xlimit = c(0,23000))
+```
+
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png) 
+
+```r
 mean(tpdimput)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(tpdimput)
+```
+
+```
+## [1] 10766.19
 ```
 Difference between mean and median for the original dataset and the one including imputation:
 Delta Mean followed  by delta median
-```{r}
+
+```r
 mean(tpdimput)-mean(tpd,na.rm=TRUE)
+```
+
+```
+## [1] 0
+```
+
+```r
 median(tpdimput)-median(tpd, na.rm=TRUE)
+```
+
+```
+## [1] 1.188679
 ```
 As observed and expected, the mean did not change as we used the mean steps by interval algorythm, however the median did change.
 
 
 Understanding if there are differences in activity patterns between weekdays and weekends
-```{r}
+
+```r
 imputation$date <- as.Date(imputation$date)
 wday <- c("Monday", "Tuesday", "Wednesday", "Thursday","Friday")
 imputation$wdays <- factor((weekdays(imputation$date) %in% wday), levels=c(FALSE, TRUE), labels=c('weekend', 'weekday'))
@@ -121,3 +181,5 @@ library(lattice)
 stepsint <- aggregate(steps ~ interval + wdays, imputation, mean)
 xyplot(stepsint$steps ~ stepsint$interval|stepsint$wdays, main="Mean Steps per Day by Interval",xlab="Interval", ylab="Steps",layout=(c(1,2)), type="l")
 ```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png) 
